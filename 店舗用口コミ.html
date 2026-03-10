@@ -542,17 +542,13 @@ async function generateReview() {
 - 過度な絶賛や定型文は避ける`;
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch('https://script.google.com/macros/s/AKfycbzMb0vumFo9pHy6_Xg9RbCGEMiyuF6G0o_L4DYtBr0WDO-d-iE-zgNgY0l6EN-Wl7yHzQ/exec', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        messages: [{ role: 'user', content: prompt }]
-      })
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ prompt: prompt })
     });
     const data = await res.json();
-    generatedText = (data.content || []).map(c => c.text || '').join('').trim();
+    generatedText = data.text || 'エラーが発生しました。再試行してください。';
   } catch (e) {
     generatedText = 'エラーが発生しました。再試行してください。';
   }

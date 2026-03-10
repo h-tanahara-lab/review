@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>口コミを書く</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap');
+  :root {
+    --accent: #4F46E5;
+    --accent-light: #EEF2FF;
+    --black: #111827;
+    --gray: #6B7280;
+    --border: #E5E7EB;
+    --bg: #F9FAFB;
+    --white: #ffffff;
+    --green: #10B981;
+    --green-light: #ECFDF5;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    min-height: 100vh;
+    background: var(--bg);
+    font-family: 'Noto Sans JP', 'Hiragino Sans', sans-serif;
+    color: var(--black);
+  }
+  .container {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 20px 16px 40px;
+    min-height: 100vh;
+  }
+
+  /* ヘッダー */
+  .shop-header {
+    background: var(--white);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 12px rgba(0,0,0,0.06);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .shop-icon {
+    width: 52px; height: 52px;
+    background: var(--accent-light);
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px; flex-shrink: 0;
+  }
+  .shop-name { font-size: 17px; font-weight: 900; line-height: 1.3; }
+  .shop-sub { font-size: 12px; color: var(--gray); margin-top: 3px; }
+
+  /* カード */
+  .card {
+    background: var(--white);
+    border-radius: 16px;
+    padding: 24px 20px;
+    box-shadow: 0 1px 12px rgba(0,0,0,0.06);
+  }
+
+  /* プログレス */
+  .progress-wrap { margin-bottom: 20px; }
+  .progress-bar {
+    height: 4px; background: var(--border);
+    border-radius: 4px; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; background: var(--accent);
+    border-radius: 4px; transition: width 0.35s ease;
+  }
+  .progress-label {
+    font-size: 11px; color: var(--gray);
+    margin-top: 6px; font-weight: 500;
+    letter-spacing: 0.05em;
+  }
+
+  /* 質問 */
+  .question { font-size: 18px; font-weight: 800; line-height: 1.4; margin-bottom: 20px; }
+
+  /* 選択ボタン */
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .options.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .opt-btn {
+    background: var(--bg);
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    color: var(--black);
+    cursor: pointer;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.15s;
+    -webkit-appearance: none;
+    min-height: 56px;
+  }
+  .opt-btn:active { transform: scale(0.97); }
+  .opt-btn.selected {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--white);
+  }
+  .opt-icon { font-size: 22px; flex-shrink: 0; }
+  .opt-check { margin-left: auto; font-size: 16px; flex-shrink: 0; }
+  .multi-hint { font-size: 12px; color: var(--gray); margin-top: 8px; }
+
+  /* テキストエリア */
+  .textarea-wrap { position: relative; }
+  textarea {
+    width: 100%;
+    background: var(--bg);
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    padding: 14px;
+    font-size: 15px;
+    font-family: inherit;
+    resize: none;
+    outline: none;
+    min-height: 100px;
+    color: var(--black);
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+  textarea:focus { border-color: var(--accent); background: var(--white); }
+  textarea::placeholder { color: #BCC1CA; }
+  .skip-hint { font-size: 12px; color: var(--gray); margin-top: 6px; text-align: right; }
+
+  /* 次へボタン */
+  .next-btn {
+    width: 100%;
+    background: var(--accent);
+    color: var(--white);
+    border: none;
+    border-radius: 14px;
+    padding: 16px;
+    font-size: 16px;
+    font-weight: 800;
+    font-family: inherit;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: all 0.15s;
+    -webkit-appearance: none;
+    letter-spacing: 0.02em;
+  }
+  .next-btn:active { transform: scale(0.98); }
+  .next-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  /* 生成中 */
+  .loading-card {
+    background: var(--white);
+    border-radius: 16px;
+    padding: 48px 20px;
+    text-align: center;
+    box-shadow: 0 1px 12px rgba(0,0,0,0.06);
+  }
+  .spinner {
+    width: 44px; height: 44px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 16px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { color: var(--gray); font-size: 14px; font-weight: 500; }
+
+  /* 結果 */
+  .result-label {
+    font-size: 13px; font-weight: 700;
+    color: var(--accent); margin-bottom: 10px;
+    letter-spacing: 0.05em;
+  }
+  .review-box {
+    background: var(--bg);
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+    font-size: 15px;
+    line-height: 1.85;
+    color: var(--black);
+    white-space: pre-wrap;
+    margin-bottom: 16px;
+  }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  .chip {
+    background: var(--accent-light);
+    color: var(--accent);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .action-btns { display: flex; flex-direction: column; gap: 10px; }
+  .copy-btn {
+    width: 100%;
+    background: var(--black);
+    color: var(--white);
+    border: none;
+    border-radius: 14px;
+    padding: 16px;
+    font-size: 15px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .copy-btn:active { transform: scale(0.98); }
+  .google-btn {
+    width: 100%;
+    background: var(--white);
+    color: #3C4043;
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    padding: 15px;
+    font-size: 15px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.15s;
+    text-decoration: none;
+  }
+  .google-btn:active { transform: scale(0.98); }
+  .regen-btn {
+    width: 100%;
+    background: transparent;
+    color: var(--gray);
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    padding: 14px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .regen-btn:active { transform: scale(0.98); }
+  .restart-btn {
+    width: 100%;
+    background: none;
+    border: none;
+    color: #BCC1CA;
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
+    padding: 12px;
+    text-decoration: underline;
+    margin-top: 4px;
+  }
+
+  /* エラー */
+  .error-card {
+    background: #FEF2F2;
+    border: 2px solid #FCA5A5;
+    border-radius: 14px;
+    padding: 20px;
+    text-align: center;
+    color: #991B1B;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  /* フッター */
+  .footer {
+    text-align: center;
+    color: #D1D5DB;
+    font-size: 11px;
+    margin-top: 24px;
+    line-height: 1.7;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div id="app"></div>
+  <div class="footer">Powered by 棚原AI社員チーム</div>
+</div>
+
+<script>
+// ============================================================
+// URLパラメータからお店情報を取得
+// 使い方: review-qr.html?placeid=ChIJxxx&shopname=お店名&shoptype=restaurant
+// ============================================================
+const params = new URLSearchParams(location.search);
+const PLACE_ID   = params.get('placeid')   || 'DEMO';
+const SHOP_NAME  = params.get('shopname')  || 'サンプル店舗';
+const SHOP_TYPE  = params.get('shoptype')  || 'other';
+const SHOP_ICON  = {
+  restaurant:'🍽️', beauty:'💇', medical:'🏥',
+  retail:'🛍️', fitness:'💪', hotel:'🏨',
+  education:'📚', other:'🏢'
+}[SHOP_TYPE] || '🏢';
+
+const REVIEW_URL = PLACE_ID !== 'DEMO'
+  ? `https://search.google.com/local/writereview?placeid=${PLACE_ID}`
+  : 'https://search.google.com/local/writereview';
+
+// ============================================================
+const STEPS = [
+  { id:'rating', question:'今回の満足度は？', type:'single',
+    options:[
+      {value:'5', label:'最高！また絶対来たい', icon:'🤩'},
+      {value:'4', label:'よかった、また来たい', icon:'😊'},
+      {value:'3', label:'普通、可もなく不可もなく', icon:'😐'},
+      {value:'2', label:'少し残念だった', icon:'😕'},
+    ]},
+  { id:'highlights', question:'特によかった点は？', type:'multi',
+    options:[
+      {value:'staff',      label:'スタッフの対応',  icon:'😊'},
+      {value:'quality',    label:'品質・技術力',    icon:'✨'},
+      {value:'price',      label:'コスパのよさ',    icon:'💰'},
+      {value:'speed',      label:'スピード・効率',  icon:'⚡'},
+      {value:'atmosphere', label:'雰囲気・清潔感',  icon:'🏡'},
+      {value:'access',     label:'アクセスのよさ',  icon:'🚉'},
+      {value:'variety',    label:'メニュー・品揃え',icon:'📋'},
+      {value:'expertise',  label:'専門知識・提案力',icon:'🎯'},
+    ]},
+  { id:'tone', question:'文章のスタイルは？', type:'single',
+    options:[
+      {value:'casual',   label:'フレンドリーに',   icon:'😄'},
+      {value:'formal',   label:'丁寧に',           icon:'👔'},
+      {value:'detailed', label:'詳しく説明',        icon:'📝'},
+      {value:'short',    label:'シンプルに短く',    icon:'⚡'},
+    ]},
+  { id:'custom', question:'一言エピソードがあれば（任意）', type:'text',
+    placeholder:'例：スタッフさんがとても親切でした、また来ます…など'},
+];
+
+const LABELS = {
+  staff:'スタッフの対応', quality:'品質・技術力', price:'コスパのよさ',
+  speed:'スピード・効率', atmosphere:'雰囲気・清潔感', access:'アクセスのよさ',
+  variety:'メニュー・品揃え', expertise:'専門知識・提案力',
+  casual:'フレンドリー', formal:'丁寧', detailed:'詳しく', short:'シンプル'
+};
+
+// 状態
+let step = 0, answers = {}, customText = '', generatedText = '';
+let phase = 'steps'; // steps | loading | result
+
+const app = document.getElementById('app');
+
+function render() {
+  // ショップヘッダー（常時表示）
+  let html = `
+    <div class="shop-header">
+      <div class="shop-icon">${SHOP_ICON}</div>
+      <div>
+        <div class="shop-name">${SHOP_NAME}</div>
+        <div class="shop-sub">口コミを書いてお店を応援しよう ⭐</div>
+      </div>
+    </div>
+  `;
+
+  if (phase === 'steps') html += renderSteps();
+  else if (phase === 'loading') html += renderLoading();
+  else if (phase === 'result') html += renderResult();
+
+  app.innerHTML = html;
+  bindEvents();
+}
+
+function renderSteps() {
+  const s = STEPS[step];
+  const total = STEPS.length;
+  const pct = ((step) / total) * 100;
+
+  let optionsHtml = '';
+  if (s.type === 'text') {
+    optionsHtml = `
+      <div class="textarea-wrap">
+        <textarea id="customInput" placeholder="${s.placeholder}" rows="4">${customText}</textarea>
+      </div>
+      <p class="skip-hint">入力しなくてもOKです</p>
+    `;
+  } else {
+    const isGrid = s.options.length >= 4 && s.type === 'multi';
+    const cls = isGrid ? 'options grid2' : 'options';
+    const opts = s.options.map(o => {
+      const sel = s.type === 'single'
+        ? answers[s.id] === o.value
+        : (answers[s.id] || []).includes(o.value);
+      return `<button class="opt-btn${sel ? ' selected' : ''}" data-val="${o.value}">
+        <span class="opt-icon">${o.icon}</span>
+        <span>${o.label}</span>
+        ${sel ? '<span class="opt-check">✓</span>' : ''}
+      </button>`;
+    }).join('');
+    optionsHtml = `<div class="${cls}">${opts}</div>`;
+    if (s.type === 'multi') optionsHtml += `<p class="multi-hint">複数選べます</p>`;
+  }
+
+  const canNext = s.type === 'text' ? true
+    : s.type === 'multi' ? (answers[s.id] || []).length > 0
+    : !!answers[s.id];
+
+  const isLast = step === STEPS.length - 1;
+
+  return `
+    <div class="card">
+      <div class="progress-wrap">
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+        <div class="progress-label">STEP ${step + 1} / ${total}</div>
+      </div>
+      <div class="question">${s.question}</div>
+      ${optionsHtml}
+      <button class="next-btn" id="nextBtn" ${canNext ? '' : 'disabled'}>
+        ${isLast ? '✨ 口コミを生成する' : '次へ →'}
+      </button>
+    </div>
+  `;
+}
+
+function renderLoading() {
+  return `
+    <div class="loading-card">
+      <div class="spinner"></div>
+      <div class="loading-text">AIが口コミを作成しています…</div>
+    </div>
+  `;
+}
+
+function renderResult() {
+  const chipHtml = (answers.highlights || [])
+    .map(h => `<span class="chip">${LABELS[h] || h}</span>`).join('');
+  const stars = '⭐'.repeat(parseInt(answers.rating || '5'));
+
+  return `
+    <div class="card">
+      <div class="result-label">✅ 口コミ文章が完成しました</div>
+      <div style="font-size:18px;margin-bottom:10px">${stars}</div>
+      <div class="chips">${chipHtml}</div>
+      <div class="review-box" id="reviewText">${generatedText}</div>
+      <div class="action-btns">
+        <button class="copy-btn" id="copyBtn">📋 テキストをコピー</button>
+        <a href="${REVIEW_URL}" target="_blank" class="google-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+          </svg>
+          Googleに投稿する
+        </a>
+        <button class="regen-btn" id="regenBtn">🔄 別のパターンを生成</button>
+        <button class="restart-btn" id="restartBtn">最初からやり直す</button>
+      </div>
+    </div>
+  `;
+}
+
+function bindEvents() {
+  // 選択ボタン
+  document.querySelectorAll('.opt-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const val = btn.dataset.val;
+      const s = STEPS[step];
+      if (s.type === 'single') {
+        answers[s.id] = val;
+      } else {
+        const curr = answers[s.id] || [];
+        answers[s.id] = curr.includes(val)
+          ? curr.filter(v => v !== val)
+          : [...curr, val];
+      }
+      render();
+    });
+  });
+
+  // テキストエリア
+  const ta = document.getElementById('customInput');
+  if (ta) ta.addEventListener('input', e => { customText = e.target.value; });
+
+  // 次へ
+  const nextBtn = document.getElementById('nextBtn');
+  if (nextBtn) nextBtn.addEventListener('click', () => {
+    if (STEPS[step].type === 'text') answers.custom = customText;
+    if (step < STEPS.length - 1) {
+      step++;
+      render();
+      window.scrollTo(0, 0);
+    } else {
+      phase = 'loading';
+      render();
+      generateReview();
+    }
+  });
+
+  // コピー
+  const copyBtn = document.getElementById('copyBtn');
+  if (copyBtn) copyBtn.addEventListener('click', () => {
+    navigator.clipboard.writeText(generatedText).then(() => {
+      copyBtn.textContent = '✅ コピーしました！';
+      setTimeout(() => { copyBtn.textContent = '📋 テキストをコピー'; }, 2500);
+    });
+  });
+
+  // 再生成
+  const regenBtn = document.getElementById('regenBtn');
+  if (regenBtn) regenBtn.addEventListener('click', () => {
+    phase = 'loading';
+    render();
+    generateReview();
+  });
+
+  // リスタート
+  const restartBtn = document.getElementById('restartBtn');
+  if (restartBtn) restartBtn.addEventListener('click', () => {
+    step = 0; answers = {}; customText = ''; generatedText = '';
+    phase = 'steps';
+    render();
+    window.scrollTo(0, 0);
+  });
+}
+
+async function generateReview() {
+  const hlLabels = (answers.highlights || []).map(h => LABELS[h] || h).join('、');
+  const prompt = `あなたはGoogle口コミを書く一般ユーザーです。以下の条件で自然でリアルな口コミを1つ生成してください。
+
+【お店情報】
+- 店名: ${SHOP_NAME}
+
+【評価】
+- 星評価: ${answers.rating}つ星
+- よかった点: ${hlLabels || 'なし'}
+- 文体スタイル: ${LABELS[answers.tone] || ''}
+- エピソード: ${answers.custom || 'なし'}
+
+【ルール】
+- 口コミ本文のみ出力（前置き・タイトル不要）
+- 150〜280文字
+- 店名を自然に1回入れる
+- 実際に体験した人が書いたようにリアルで具体的に
+- 過度な絶賛や定型文は避ける`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await res.json();
+    generatedText = (data.content || []).map(c => c.text || '').join('').trim();
+  } catch (e) {
+    generatedText = 'エラーが発生しました。再試行してください。';
+  }
+  phase = 'result';
+  render();
+  window.scrollTo(0, 0);
+}
+
+render();
+</script>
+</body>
+</html>

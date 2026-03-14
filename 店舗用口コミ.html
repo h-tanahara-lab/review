@@ -313,7 +313,7 @@ const STEPS = [
       {value:'3', label:'普通、可もなく不可もなく', icon:'😐'},
       {value:'2', label:'少し残念だった', icon:'😕'},
     ]},
-  { id:'highlights', question:'特によかった点は？', type:'multi',
+  { id:'highlights', question:'特によかった点は？', subLabel:'複数選べます', type:'multi',
     options:[
       {value:'staff',      label:'スタッフの対応',  icon:'😊'},
       {value:'quality',    label:'品質・技術力',    icon:'✨'},
@@ -324,14 +324,14 @@ const STEPS = [
       {value:'variety',    label:'メニュー・品揃え',icon:'📋'},
       {value:'expertise',  label:'専門知識・提案力',icon:'🎯'},
     ]},
-  { id:'tone', question:'文章のスタイルは？', type:'single',
+  { id:'tone', question:'口コミの文章はどんなトーン・言葉遣いで書きますか？', type:'single',
     options:[
       {value:'casual',   label:'フレンドリーに',   icon:'😄'},
       {value:'formal',   label:'丁寧に',           icon:'👔'},
       {value:'detailed', label:'詳しく説明',        icon:'📝'},
       {value:'short',    label:'シンプルに短く',    icon:'⚡'},
     ]},
-  { id:'custom', question:'一言エピソードがあれば（任意）', type:'text',
+  { id:'custom', question:'一言エピソードがあれば', subLabel:'任意・入力しなくてもOK', type:'text',
     placeholder:'例：スタッフさんがとても親切でした、また来ます…など'},
 ];
 
@@ -344,7 +344,7 @@ const LABELS = {
 
 // 状態
 let step = 0, answers = {}, customText = '', generatedText = '';
-let phase = 'steps'; // steps | loading | result
+let phase = 'intro'; // intro | steps | loading | result
 
 const app = document.getElementById('app');
 
@@ -360,12 +360,48 @@ function render() {
     </div>
   `;
 
-  if (phase === 'steps') html += renderSteps();
+  if (phase === 'intro') html += renderIntro();
+  else if (phase === 'steps') html += renderSteps();
   else if (phase === 'loading') html += renderLoading();
   else if (phase === 'result') html += renderResult();
 
   app.innerHTML = html;
   bindEvents();
+}
+
+function renderIntro() {
+  return `
+    <div class="card">
+      <div style="text-align:center;padding:8px 0 20px">
+        <div style="font-size:48px;margin-bottom:12px">🤖</div>
+        <div style="font-size:20px;font-weight:900;line-height:1.4;margin-bottom:10px">AIが口コミ作成を<br>サポートします！</div>
+        <div style="font-size:14px;color:var(--gray);line-height:1.8;margin-bottom:20px">
+          いくつかの質問に答えるだけで、<br>
+          AIがあなたにぴったりの口コミ文章を<br>自動で作成します。
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:24px;text-align:left">
+          <div style="display:flex;align-items:center;gap:12px;background:var(--accent-light);border-radius:12px;padding:12px 14px">
+            <span style="font-size:22px">⭐</span>
+            <div><span style="font-weight:700;font-size:13px">STEP 1</span><span style="font-size:13px;color:var(--gray);margin-left:8px">満足度を選ぶ</span></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;background:var(--accent-light);border-radius:12px;padding:12px 14px">
+            <span style="font-size:22px">👍</span>
+            <div><span style="font-weight:700;font-size:13px">STEP 2</span><span style="font-size:13px;color:var(--gray);margin-left:8px">よかった点を選ぶ</span></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;background:var(--accent-light);border-radius:12px;padding:12px 14px">
+            <span style="font-size:22px">✍️</span>
+            <div><span style="font-weight:700;font-size:13px">STEP 3</span><span style="font-size:13px;color:var(--gray);margin-left:8px">文体を選ぶ</span></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;background:var(--accent-light);border-radius:12px;padding:12px 14px">
+            <span style="font-size:22px">💬</span>
+            <div><span style="font-weight:700;font-size:13px">STEP 4</span><span style="font-size:13px;color:var(--gray);margin-left:8px">一言エピソード（任意）</span></div>
+          </div>
+        </div>
+        <p style="font-size:13px;color:var(--gray);margin-bottom:4px">所要時間：約1〜2分</p>
+      </div>
+      <button class="next-btn" id="startBtn">はじめる →</button>
+    </div>
+  `;
 }
 
 function renderSteps() {
@@ -379,7 +415,7 @@ function renderSteps() {
       <div class="textarea-wrap">
         <textarea id="customInput" placeholder="${s.placeholder}" rows="4">${customText}</textarea>
       </div>
-      <p class="skip-hint">入力しなくてもOKです</p>
+
     `;
   } else {
     const isGrid = s.options.length >= 4 && s.type === 'multi';
@@ -395,7 +431,6 @@ function renderSteps() {
       </button>`;
     }).join('');
     optionsHtml = `<div class="${cls}">${opts}</div>`;
-    if (s.type === 'multi') optionsHtml += `<p class="multi-hint">複数選べます</p>`;
   }
 
   const canNext = s.type === 'text' ? true
@@ -410,7 +445,7 @@ function renderSteps() {
         <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
         <div class="progress-label">STEP ${step + 1} / ${total}</div>
       </div>
-      <div class="question">${s.question}</div>
+      <div class="question">${s.question}${s.subLabel ? '<span style="font-size:12px;font-weight:500;color:var(--gray);margin-left:8px">' + s.subLabel + '</span>' : ''}</div>
       ${optionsHtml}
       <button class="next-btn" id="nextBtn" ${canNext ? '' : 'disabled'}>
         ${isLast ? '✨ 口コミを生成する' : '次へ →'}
@@ -458,6 +493,10 @@ function renderResult() {
 }
 
 function bindEvents() {
+  // スタートボタン
+  const startBtn = document.getElementById('startBtn');
+  if (startBtn) startBtn.addEventListener('click', () => { phase = 'steps'; render(); window.scrollTo(0,0); });
+
   // 選択ボタン
   document.querySelectorAll('.opt-btn').forEach(btn => {
     btn.addEventListener('click', () => {

@@ -282,7 +282,7 @@
 <body>
 <div class="container">
   <div id="app"></div>
-  <div class="footer">Powered by U-WAN</div>
+  <div class="footer">Powered by 棚原AI社員チーム</div>
 </div>
 
 <script>
@@ -303,6 +303,12 @@ const SHOP_ICON  = {
 const REVIEW_URL = PLACE_ID !== 'DEMO'
   ? `https://search.google.com/local/writereview?placeid=${PLACE_ID}`
   : 'https://search.google.com/local/writereview';
+
+// ============================================================
+// ブロックリスト（利用停止にしたいPlaceIDをここに追加）
+// 例: 'ChIJxxx...', 'ChIJyyy...'
+const BLOCKED_IDS = [
+];
 
 // ============================================================
 const STEPS = [
@@ -349,6 +355,18 @@ let phase = 'intro'; // intro | steps | loading | result
 const app = document.getElementById('app');
 
 function render() {
+  // ブロックチェック
+  if (BLOCKED_IDS.includes(PLACE_ID)) {
+    app.innerHTML = `
+      <div class="card" style="text-align:center;padding:40px 20px">
+        <div style="font-size:48px;margin-bottom:16px">🚫</div>
+        <div style="font-size:17px;font-weight:800;margin-bottom:10px">このURLは現在ご利用いただけません</div>
+        <div style="font-size:14px;color:var(--gray);line-height:1.8">サービスの有効期限が切れているか、<br>ご利用が停止されています。<br>詳しくはご担当者にお問い合わせください。</div>
+      </div>
+    `;
+    return;
+  }
+
   // ショップヘッダー（常時表示）
   let html = `
     <div class="shop-header">
